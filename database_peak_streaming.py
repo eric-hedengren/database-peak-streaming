@@ -8,35 +8,44 @@ from sqlite3 import Error
 instrument_ip = '10.0.0.55'    # Enter the correct IP address
 num_of_peaks = 8               # Required
 num_of_ports = 8               # Required for different machines
-streaming_time = 1             # Time increments written to the database
+streaming_time = 1             # Time increments written to the database INCREASE LENGTH
 database = "peak_data.db"      # Name the database
 
 async def get_data(conn):
-    peak_num = []
-    sensors_num_list = []
     while True:
-        peak_data = await queue.get()
-        queue.task_done()
-        if peak_data['data']:
-            ts = time.time()
-            current_peaks = list(peak_data['data'].data)
-            peak_num.append(current_peaks)
-            sensors_num = []
-            for port_list in peak_data['data'].channel_slices[:num_of_ports]: # Add average rows into the database, every 10?
-                sensors_num.append(len(port_list))
-            sensors_num.insert(0, ts)
-            with conn:
-                add_data(conn, sensors_num, current_peaks)
-            sensors_num_list.append(sensors_num)
-        else:
-            break
+        peak_num = []
+        sensors_num = []
+        for i in range(10):
+            peak_data = await queue.get()
+            queue.task_done()
+            if peak_data['data']:
+                peak_num.append(list(peak_data['data'].data))
+                if i == 0:
+                    ts = time.time()
+                    sensors_num = []
+                    for port_list in peak_data['data'].channel_slices[:num_of_ports]:
+                        sensors_num.append(len(port_list))
+                    sensors_num.insert(0, ts)
+            else:
+                break
+
+        average_peak_num = []
+
+        for peak in range(len(peak_num[0])):
+            current_sensor = []
+            for data_list in peak_num:
+                current_sensor.append(data_list[peak])
+            average_peak_num.append(np.mean(current_sensor))
+
+        with conn:
+            add_data(conn, sensors_num, average_peak_num)
 
 def add_data(conn, data, peak_data):
     data_sql = 'INSERT INTO data(peak_data_id,timestamp,{parameters}) VALUES({question})'.format(parameters = data_parameters, question = data_question)
     peak_sql = 'INSERT INTO peak_data({parameters}) VALUES({question})'.format(parameters = peak_parameters, question = peak_question)
 
     cur = conn.cursor()
-    cur.execute(peak_sql, peak_data)
+    cur.execute(peak_sql, peak_data) # Multiple rows at once?
     data.insert(0, cur.lastrowid)
     cur.execute(data_sql, data)
 
@@ -75,14 +84,18 @@ if conn:
 else:
     raise Exception("Cannot create the database connection.")
 
-loop = asyncio.get_event_loop()
-queue = asyncio.Queue(maxsize=5, loop=loop)
-stream_active = True
+for i in range(2):
+    print('start stream')
+    loop = asyncio.get_event_loop() # Loop the loop
+    queue = asyncio.Queue(maxsize=5, loop=loop)
+    stream_active = True
 
-peaks_streamer = hyperion.HCommTCPPeaksStreamer(instrument_ip, loop, queue)
+    peaks_streamer = hyperion.HCommTCPPeaksStreamer(instrument_ip, loop, queue)
 
-loop.create_task(get_data(conn))
+    loop.create_task(get_data(conn))
 
-loop.call_later(streaming_time, peaks_streamer.stop_streaming)
+    loop.call_later(streaming_time, peaks_streamer.stop_streaming)
 
-loop.run_until_complete(peaks_streamer.stream_data())
+    loop.run_until_complete(peaks_streamer.stream_data())
+
+    print('repeat stream')
