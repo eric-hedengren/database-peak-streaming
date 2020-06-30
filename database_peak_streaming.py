@@ -7,12 +7,12 @@ import sqlite3
 instrument_ip = '10.0.0.55'
 num_of_peaks = 8
 num_of_ports = 8
-streaming_time = 86400
+streaming_time = 5
 
 async def get_data(con):
     while True:
         peak_num = []
-        for i in range(500):
+        for i in range(5000):
             peak_data = await queue.get()
             queue.task_done()
             if peak_data['data']:
