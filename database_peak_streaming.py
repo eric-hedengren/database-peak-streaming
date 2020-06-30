@@ -3,7 +3,6 @@ import asyncio
 import numpy as np
 import time
 import sqlite3
-from sqlite3 import Error
 
 instrument_ip = '10.0.0.55'
 num_of_peaks = 8
@@ -35,29 +34,27 @@ async def get_data(con):
                 current_sensor.append(data_list[peak])
             average_peak_num.append(np.mean(current_sensor))
 
-        with con:
-            add_data(con, sensors_num, average_peak_num)
+        add_data(con, sensors_num, average_peak_num)
 
 def add_data(con, data, peak_data):
-    cur = con.cursor()
-    cur.execute(peak_sql, peak_data)
-    data.insert(0, cur.lastrowid)
-    cur.execute(data_sql, data)
+    with con:
+        cur = con.cursor()
+        cur.execute(peak_sql, peak_data)
+        data.insert(0, cur.lastrowid)
+        cur.execute(data_sql, data)
 
 def create_connection(db_file):
     con = None
     try:
         con = sqlite3.connect(db_file)
-    except Error as e:
-        print(e)
+    except:
+        print(sqlite3.Error)
     return con
 
 def create_table(con, create_table_sql):
-    try:
+    with con:
         c = con.cursor()
         c.execute(create_table_sql)
-    except Error as e:
-        print(e)
 
 peak_question = ','.join('?' * (num_of_peaks))
 data_question = ','.join('?' * (num_of_ports+2))
@@ -79,7 +76,7 @@ if con:
     create_table(con, create_peak_data_table)
     create_table(con, create_data_table)
 else:
-    raise Exception("Cannot create the database connection.")
+    raise Exception('Cannot create database connection.')
 
 loop = asyncio.get_event_loop()
 queue = asyncio.Queue(maxsize=5, loop=loop)
