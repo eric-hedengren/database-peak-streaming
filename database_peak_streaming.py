@@ -7,13 +7,13 @@ import sqlite3
 instrument_ip = '10.0.0.55'
 num_of_peaks = 8
 num_of_ports = 8
-streaming_time = 5
+streaming_time = 1000
 
 async def get_data(con):
     while True:
         peak_num = []
-        b = time.time()
-        while time.time()-b < 1:
+        begin = time.time()
+        while time.time()-begin < .08:
             peak_data = await queue.get()
             queue.task_done()
             if peak_data['data']:
@@ -22,7 +22,6 @@ async def get_data(con):
                 return
 
         ts = time.time()
-
         sensors_num = []
         for port_list in peak_data['data'].channel_slices[:num_of_ports]:
             sensors_num.append(len(port_list))
@@ -44,14 +43,6 @@ def add_data(con, data, peak_data):
         data.insert(0, cur.lastrowid)
         cur.execute(data_sql, data)
 
-def create_connection(db_file):
-    con = None
-    try:
-        con = sqlite3.connect(db_file)
-    except:
-        print(sqlite3.Error)
-    return con
-
 def create_table(con, create_table_sql):
     with con:
         c = con.cursor()
@@ -71,7 +62,11 @@ create_data_table = "create table if not exists data (id integer PRIMARY KEY,pea
 peak_sql = 'INSERT INTO peak_data({parameters}) VALUES({question})'.format(parameters = peak_parameters, question = peak_question)
 data_sql = 'INSERT INTO data(peak_data_id,timestamp,{parameters}) VALUES({question})'.format(parameters = data_parameters, question = data_question)
 
-con = create_connection("peak_data.db")
+con = None
+try:
+    con = sqlite3.connect('database/peak_data.db')
+except:
+    print(sqlite3.Error)
 
 if con:
     create_table(con, create_peak_data_table)
