@@ -8,12 +8,12 @@ import csv
 instrument_ip = '10.0.0.55'
 num_of_peaks = 8
 num_of_ports = 8
-streaming_time = 100000
+streaming_time = 11
 
 async def get_data(con):
     repeat = time.time()
     while True:
-        if time.time()-repeat < 86400:
+        if time.time()-repeat < 5:
             peak_num = []
             begin = time.time()
 
@@ -79,14 +79,13 @@ data_sql = 'insert into data(peak_data_id,timestamp,{parameters}) VALUES({questi
 database_tables = ('peak_data','data')
 
 con = sqlite3.connect('database/peak_data.db')
+cur = con.cursor()
 
 if con:
     create_table(con, create_peak_data_table)
     create_table(con, create_data_table)
 else:
     raise Exception('Cannot create database connection.')
-
-cur = con.cursor()
 
 loop = asyncio.get_event_loop()
 queue = asyncio.Queue(maxsize=5, loop=loop)
