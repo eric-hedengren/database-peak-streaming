@@ -8,7 +8,7 @@ import csv
 instrument_ip = '10.0.0.55'
 num_of_peaks = 8
 num_of_ports = 8
-streaming_time = 1000000
+streaming_time = 100000
 
 async def get_data(con):
     repeat = time.time()
@@ -16,6 +16,7 @@ async def get_data(con):
         if time.time()-repeat < 86400:
             peak_num = []
             begin = time.time()
+
             while time.time()-begin < .08:
                 peak_data = await queue.get()
                 queue.task_done()
@@ -38,6 +39,7 @@ async def get_data(con):
                 average_peak_num.append(np.mean(current_sensor))
 
             add_data(con, sensors_num, average_peak_num)
+
         else:
             export_csv(con)
             repeat = time.time()
@@ -71,19 +73,20 @@ create_peak_data_table = "create table if not exists peak_data (id integer PRIMA
 create_data_table = "create table if not exists data (id integer PRIMARY KEY,peak_data_id integer NOT NULL,"+\
 "timestamp double NOT NULL,{},FOREIGN KEY (peak_data_id) REFERENCES peak_data (id));".format(data_table_variables)
 
-peak_sql = 'INSERT INTO peak_data({parameters}) VALUES({question})'.format(parameters = peak_parameters, question = peak_question)
-data_sql = 'INSERT INTO data(peak_data_id,timestamp,{parameters}) VALUES({question})'.format(parameters = data_parameters, question = data_question)
+peak_sql = 'insert into peak_data({parameters}) VALUES({question})'.format(parameters = peak_parameters, question = peak_question)
+data_sql = 'insert into data(peak_data_id,timestamp,{parameters}) VALUES({question})'.format(parameters = data_parameters, question = data_question)
 
 database_tables = ('peak_data','data')
 
 con = sqlite3.connect('database/peak_data.db')
-cur = con.cursor()
 
 if con:
     create_table(con, create_peak_data_table)
     create_table(con, create_data_table)
 else:
     raise Exception('Cannot create database connection.')
+
+cur = con.cursor()
 
 loop = asyncio.get_event_loop()
 queue = asyncio.Queue(maxsize=5, loop=loop)
