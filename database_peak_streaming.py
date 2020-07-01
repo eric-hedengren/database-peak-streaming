@@ -12,7 +12,8 @@ streaming_time = 5
 async def get_data(con):
     while True:
         peak_num = []
-        for i in range(5000):
+        b = time.time()
+        while time.time()-b < 1:
             peak_data = await queue.get()
             queue.task_done()
             if peak_data['data']:
