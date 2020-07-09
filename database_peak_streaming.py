@@ -77,26 +77,25 @@ def export_csv():
             csv_writer.writerow([i[0] for i in cur.description])
             csv_writer.writerows(cur)
 
-data_question = ','.join('?' * (num_of_ports+1))
-peak_question = ','.join('?' * (num_of_peaks))
-data_parameters = ','.join('port'+str(i) for i in range(1,num_of_ports+1))
-peak_parameters = ','.join('peak'+str(i) for i in range(1,num_of_peaks+1))
-data_table_variables = ','.join('port'+str(i)+' smallint UNSIGNED' for i in range(1,num_of_ports+1))
-peak_table_variables = ','.join('peak'+str(i)+' float UNSIGNED' for i in range(1,num_of_peaks+1))
+data_tv = ','.join('port'+str(i)+' smallint UNSIGNED' for i in range(1,num_of_ports+1))
+peak_tv = ','.join('peak'+str(i)+' float UNSIGNED' for i in range(1,num_of_peaks+1))
 
-st_create_data_table = 'create table if not exists st_data (id integer PRIMARY KEY,timestamp double NOT NULL,'+data_table_variables+');'
-st_create_peak_table = 'create table if not exists st_peak (id integer PRIMARY KEY,'+peak_table_variables+');'
-lt_create_data_table = 'create table if not exists lt_data (id integer PRIMARY KEY,timestamp double NOT NULL,'+data_table_variables+');'
-lt_create_peak_table = 'create table if not exists lt_peak (id integer PRIMARY KEY,'+peak_table_variables+');'
+e = ');'
 
-create_tables = (st_create_data_table, st_create_peak_table, lt_create_data_table, lt_create_peak_table)
+st_ct_data = 'create table if not exists st_data (id integer PRIMARY KEY,timestamp double NOT NULL,'+data_tv+e
+lt_ct_data = 'create table if not exists lt_data (id integer PRIMARY KEY,timestamp double NOT NULL,'+data_tv+e
+st_ct_peak = 'create table if not exists st_peak (id integer PRIMARY KEY,'+peak_tv+e
+lt_ct_peak = 'create table if not exists lt_peak (id integer PRIMARY KEY,'+peak_tv+e
 
-st_data_sql = 'insert into st_data(timestamp,{parameters}) VALUES({question})'.format(parameters = data_parameters, question = data_question)
-st_peak_sql = 'insert into st_peak({parameters}) VALUES({question})'.format(parameters = peak_parameters, question = peak_question)
-lt_data_sql = 'insert into lt_data(timestamp,{parameters}) VALUES({question})'.format(parameters = data_parameters, question = data_question)
-lt_peak_sql = 'insert into lt_peak({parameters}) VALUES({question})'.format(parameters = peak_parameters, question = peak_question)
+data_p = ','.join('port'+str(i) for i in range(1,num_of_ports+1))
+peak_p = ','.join('peak'+str(i) for i in range(1,num_of_peaks+1))
+data_q = ','.join('?' * (num_of_ports+1))
+peak_q = ','.join('?' * (num_of_peaks))
 
-database_tables = ('st_data','st_peak','lt_data','lt_peak')
+st_data_sql = 'insert into st_data(timestamp,{p}) VALUES({q})'.format(p = data_p, q = data_q)
+lt_data_sql = 'insert into lt_data(timestamp,{p}) VALUES({q})'.format(p = data_p, q = data_q)
+st_peak_sql = 'insert into st_peak({p}) VALUES({q})'.format(p = peak_p, q = peak_q)
+lt_peak_sql = 'insert into lt_peak({p}) VALUES({q})'.format(p = peak_p, q = peak_q)
 
 for folder in ('database','csv'):
     os.makedirs('./'+folder, exist_ok = True)
@@ -104,9 +103,17 @@ for folder in ('database','csv'):
 con = sqlite3.connect('database/peak_data.db')
 cur = con.cursor()
 
+create_tables = (st_ct_data,lt_ct_data,st_ct_peak,lt_ct_peak)
+
 with con:
     for table in create_tables:
         cur.execute(table)
+
+cur.execute("select name from sqlite_master where type='table';")
+dt = cur.fetchall()
+database_tables = []
+for tup in dt:
+    database_tables.append(tup[0])
 
 loop = asyncio.get_event_loop()
 queue = asyncio.Queue(maxsize=5, loop=loop)
