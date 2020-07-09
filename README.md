@@ -3,6 +3,7 @@ Python program that utilizes fiber optics designed to measure changes in tension
 
 ## Things to Customize in [Database Peak Streaming][1]
 IP address of the Micro Optics machine
+
 -instrument_ip = '10.0.0.55'
 
 Number of unique peak frequencies
