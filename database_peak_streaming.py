@@ -9,16 +9,16 @@ import os
 instrument_ip = '10.0.0.55'
 num_of_peaks = 8
 num_of_ports = 8
-streaming_time = 100
+streaming_time = 10 # Years long
 
 async def get_data(con):
     repeat = time.time()
     big_port_numbers = []; big_peak_data = []
     while True:
-        if time.time()-repeat < 10:
+        if time.time()-repeat < 1: # Every day/hour
             peak_num = []
             begin = time.time()
-            while time.time()-begin < .08:
+            while time.time()-begin < .097:
                 peak_data = await queue.get()
                 queue.task_done()
                 if peak_data['data']:
