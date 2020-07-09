@@ -10,10 +10,10 @@ instrument_ip = '10.0.0.55'
 num_of_peaks = 8
 num_of_ports = 8
 st_length = 30 # A week
-lt_increment = 10 # A minute - less than repeat amount
+lt_increment = 10 # A minute
 streaming_time = 101 # Infinite
 
-async def get_data(con):
+async def get_data():
     repeat = time.time()
     st_data=[]; st_peak=[]; lt_data=[]; lt_peak=[]
     while True:
@@ -121,6 +121,6 @@ stream_active = True
 
 peaks_streamer = hyperion.HCommTCPPeaksStreamer(instrument_ip, loop, queue)
 
-loop.create_task(get_data(con))
+loop.create_task(get_data())
 loop.call_later(streaming_time, peaks_streamer.stop_streaming)
 loop.run_until_complete(peaks_streamer.stream_data())
