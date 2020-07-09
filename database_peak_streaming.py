@@ -1,6 +1,6 @@
 import hyperion
 import asyncio
-import numpy as np
+import numpy
 import time
 import sqlite3
 import csv
@@ -40,7 +40,7 @@ async def get_data(con):
                 current_sensor = []
                 for data_list in peak_num:
                     current_sensor.append(data_list[peak])
-                average_peak_num.append(np.mean(current_sensor))
+                average_peak_num.append(numpy.mean(current_sensor))
 
             big_peak_data.append(average_peak_num)
 
