@@ -10,7 +10,7 @@ instrument_ip = '10.0.0.55'
 num_of_peaks = 8
 num_of_ports = 8
 st_length = 30 # A week
-lt_increment = 100 # A minute
+lt_increment = 10 # A minute - less than repeat amount
 streaming_time = 201 # Infinite
 
 async def get_data(con):
