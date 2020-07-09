@@ -4,17 +4,18 @@ import numpy as np
 import time
 import sqlite3
 import csv
+import os
 
 instrument_ip = '10.0.0.55'
 num_of_peaks = 8
 num_of_ports = 8
-streaming_time = 10
+streaming_time = 100
 
 async def get_data(con):
     repeat = time.time()
     big_port_numbers = []; big_peak_data = []
     while True:
-        if time.time()-repeat < 9:
+        if time.time()-repeat < 10:
             peak_num = []
             begin = time.time()
             while time.time()-begin < .08:
@@ -80,6 +81,9 @@ peak_sql = 'insert into peak_data({parameters}) VALUES({question})'.format(param
 data_sql = 'insert into data(timestamp,{parameters}) VALUES({question})'.format(parameters = data_parameters, question = data_question)
 
 database_tables = ('peak_data','data')
+
+for folder in ('database','csv'):
+    os.makedirs('./'+folder, exist_ok = True)
 
 con = sqlite3.connect('database/peak_data.db')
 cur = con.cursor()
