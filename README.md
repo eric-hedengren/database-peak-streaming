@@ -8,7 +8,7 @@ Python program that utilizes fiber optics designed to measure changes in tension
 
 **Number of unique peak frequencies**
 
-`num_of_peaks = 8`
+`num_of_peaks = 120` _# Number of unique frequencies_
 
 **Number of skipped data points for long term storage**
 
