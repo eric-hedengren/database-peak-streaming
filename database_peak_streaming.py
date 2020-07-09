@@ -9,13 +9,13 @@ import os
 instrument_ip = '10.0.0.55'
 num_of_peaks = 8
 num_of_ports = 8
-streaming_time = 10 # Years long
+streaming_time = 100 # Years long
 
 async def get_data(con):
     repeat = time.time()
     big_port_numbers = []; big_peak_data = []
     while True:
-        if time.time()-repeat < 1: # Every day/hour
+        if time.time()-repeat < 10: # Every day/hour
             peak_num = []
             begin = time.time()
             while time.time()-begin < .097:
@@ -45,20 +45,27 @@ async def get_data(con):
             big_peak_data.append(average_peak_num)
 
         else:
+            repeat = time.time()
             add_data(con, big_port_numbers, big_peak_data)
+            delete_data(repeat)
             big_port_numbers = []; big_peak_data = []
             export_csv(con)
-            repeat = time.time()
 
 def add_data(con, data, peak_data):
     with con:
         cur.executemany(peak_sql, peak_data)
         cur.executemany(data_sql, data)
 
+def delete_data(current_time):
+    with con:
+        cur.execute('delete from data where '+str(current_time)+'-timestamp > 30')
+        data_id = cur.execute('select id from data limit 1').fetchone()
+        cur.execute('delete from peak_data where id < '+str(data_id[0]))
+
 def export_csv(con):
     for table in database_tables:
-        cur.execute("select * from "+table+";")
-        with open('csv/'+table+".csv", "w", newline='') as csv_file:
+        cur.execute('select * from '+table+';')
+        with open('csv/'+table+'.csv', 'w', newline='') as csv_file:
             csv_writer = csv.writer(csv_file)
             csv_writer.writerow([i[0] for i in cur.description])
             csv_writer.writerows(cur)
@@ -74,8 +81,8 @@ data_parameters = ','.join('port'+str(i) for i in range(1,num_of_ports+1))
 peak_table_variables = ','.join('peak'+str(i)+' float UNSIGNED' for i in range(1,num_of_peaks+1))
 data_table_variables = ','.join('port'+str(i)+' smallint UNSIGNED' for i in range(1,num_of_ports+1))
 
-create_peak_data_table = "create table if not exists peak_data (id integer PRIMARY KEY,{});".format(peak_table_variables)
-create_data_table = "create table if not exists data (id integer PRIMARY KEY,timestamp double NOT NULL,{});".format(data_table_variables)
+create_peak_data_table = 'create table if not exists peak_data (id integer PRIMARY KEY,{});'.format(peak_table_variables)
+create_data_table = 'create table if not exists data (id integer PRIMARY KEY,timestamp double NOT NULL,{});'.format(data_table_variables)
 
 peak_sql = 'insert into peak_data({parameters}) VALUES({question})'.format(parameters = peak_parameters, question = peak_question)
 data_sql = 'insert into data(timestamp,{parameters}) VALUES({question})'.format(parameters = data_parameters, question = data_question)
