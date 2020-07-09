@@ -8,16 +8,16 @@ import os
 
 instrument_ip = '10.0.0.55'
 num_of_peaks = 8
-num_of_ports = 8
-st_length = 30 # A week
-lt_increment = 10 # A minute
-streaming_time = 101 # Infinite
+lt_increment = 10 # Repeats | A minute
+write_data = 10 # Seconds | Every hour
+st_length = 30 # Seconds | A week
+streaming_time = 101 # Seconds | Infinite
 
 async def get_data():
     repeat = time.time()
     st_data=[]; st_peak=[]; lt_data=[]; lt_peak=[]
     while True:
-        if time.time()-repeat < 10: # Every day/hour
+        if time.time()-repeat < write_data:
             peak_num = []
             begin = time.time()
             while time.time()-begin < .097:
@@ -77,10 +77,11 @@ def export_csv():
             csv_writer.writerow([i[0] for i in cur.description])
             csv_writer.writerows(cur)
 
+num_of_ports = 8
+e = ');'
+
 data_tv = ','.join('port'+str(i)+' smallint UNSIGNED' for i in range(1,num_of_ports+1))
 peak_tv = ','.join('peak'+str(i)+' float UNSIGNED' for i in range(1,num_of_peaks+1))
-
-e = ');'
 
 st_ct_data = 'create table if not exists st_data (id integer PRIMARY KEY,timestamp double NOT NULL,'+data_tv+e
 lt_ct_data = 'create table if not exists lt_data (id integer PRIMARY KEY,timestamp double NOT NULL,'+data_tv+e
@@ -92,10 +93,10 @@ peak_p = ','.join('peak'+str(i) for i in range(1,num_of_peaks+1))
 data_q = ','.join('?' * (num_of_ports+1))
 peak_q = ','.join('?' * (num_of_peaks))
 
-st_data_sql = 'insert into st_data(timestamp,{p}) VALUES({q})'.format(p = data_p, q = data_q)
-lt_data_sql = 'insert into lt_data(timestamp,{p}) VALUES({q})'.format(p = data_p, q = data_q)
-st_peak_sql = 'insert into st_peak({p}) VALUES({q})'.format(p = peak_p, q = peak_q)
-lt_peak_sql = 'insert into lt_peak({p}) VALUES({q})'.format(p = peak_p, q = peak_q)
+st_data_sql = 'insert into st_data(timestamp,{p}) VALUES({q})'.format(p=data_p, q=data_q)
+lt_data_sql = 'insert into lt_data(timestamp,{p}) VALUES({q})'.format(p=data_p, q=data_q)
+st_peak_sql = 'insert into st_peak({p}) VALUES({q})'.format(p=peak_p, q=peak_q)
+lt_peak_sql = 'insert into lt_peak({p}) VALUES({q})'.format(p=peak_p, q=peak_q)
 
 for folder in ('database','csv'):
     os.makedirs('./'+folder, exist_ok = True)
