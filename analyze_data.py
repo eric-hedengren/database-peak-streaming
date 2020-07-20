@@ -3,7 +3,7 @@ import matplotlib
 import csv
 import os
 
-# don't export csv at all?
+# don't export csv? instead use lists?
 def export_csv(): # export interpreted data instead?
     for table in database_tables:
         cur.execute('select * from '+table+';')
@@ -39,4 +39,5 @@ temperature = (wl-iwl)/(wl*gf*(metal_constant+alpha)) + itp
 strain = total_strain-temperature
 '''
 
-#Plot some data
+# graph some data
+# subplots for each port
