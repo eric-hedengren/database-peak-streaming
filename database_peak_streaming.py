@@ -56,7 +56,6 @@ async def get_data():
             add_data(lt_data_sql, lt_peak_sql, lt_data, lt_peak)
             
             st_data=[]; st_peak=[]; lt_data=[]; lt_peak=[]
-            export_csv()
 
 def add_data(insert_data, insert_peak, data, peak):
     with con:
@@ -68,14 +67,6 @@ def delete_st_data(current_time):
         cur.execute('delete from st_data where '+str(current_time)+'-timestamp > '+str(st_length))
         data_id = cur.execute('select id from st_data limit 1').fetchone()
         cur.execute('delete from st_peak where id < '+str(data_id[0]))
-
-def export_csv():
-    for table in database_tables:
-        cur.execute('select * from '+table+';')
-        with open('csv/'+table+'.csv', 'w', newline='') as csv_file:
-            csv_writer = csv.writer(csv_file)
-            csv_writer.writerow([i[0] for i in cur.description])
-            csv_writer.writerows(cur)
 
 num_of_ports = 8
 e = ');'
@@ -98,8 +89,7 @@ lt_data_sql = 'insert into lt_data(timestamp,{p}) VALUES({q})'.format(p=data_p, 
 st_peak_sql = 'insert into st_peak({p}) VALUES({q})'.format(p=peak_p, q=peak_q)
 lt_peak_sql = 'insert into lt_peak({p}) VALUES({q})'.format(p=peak_p, q=peak_q)
 
-for folder in ('database','csv'):
-    os.makedirs('./'+folder, exist_ok = True)
+os.makedirs('./database', exist_ok = True)
 
 con = sqlite3.connect('database/peak_data.db')
 cur = con.cursor()
@@ -110,8 +100,7 @@ with con:
     for table in create_tables:
         cur.execute(table)
 
-cur.execute("select name from sqlite_master where type='table';")
-dt = cur.fetchall()
+dt = cur.execute("select name from sqlite_master where type='table';").fetchall()
 database_tables = []
 for tup in dt:
     database_tables.append(tup[0])
